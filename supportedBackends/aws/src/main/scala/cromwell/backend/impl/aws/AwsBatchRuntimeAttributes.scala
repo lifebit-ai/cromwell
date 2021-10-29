@@ -67,6 +67,7 @@ case class AwsBatchRuntimeAttributes(cpu: Int Refined Positive,
                                      disks: Seq[AwsBatchVolume],
                                      dockerImage: String,
                                      queueArn: String,
+                                     jobRoleArn: Option[String],
                                      failOnStderr: Boolean,
                                      continueOnReturnCode: ContinueOnReturnCode,
                                      noAddress: Boolean,
@@ -76,6 +77,8 @@ case class AwsBatchRuntimeAttributes(cpu: Int Refined Positive,
 object AwsBatchRuntimeAttributes {
 
   val QueueArnKey = "queueArn"
+
+  val JobRoleArnKey = "jobRoleArn"
 
   val scriptS3BucketKey = "scriptBucketName"
 
@@ -134,6 +137,10 @@ object AwsBatchRuntimeAttributes {
     QueueArnValidation.withDefault(QueueArnValidation.configDefaultWomValue(runtimeConfig) getOrElse
       (throw new RuntimeException("queueArn is required")))
 
+  private def jobRoleArnValidation(runtimeConfig: Option[Config]: Option[RuntimeAttributesValidation[String]] =
+    Try(JobRoleArnValidation.withDefault(JobRoleArnValidation.configDefaultWomValue(runtimeConfig).toOption()
+  )
+
   def runtimeAttributesBuilder(configuration: AwsBatchConfiguration): StandardValidatedRuntimeAttributesBuilder = {
     val runtimeConfig = configuration.runtimeConfig
     def validationsS3backend = StandardValidatedRuntimeAttributesBuilder.default(runtimeConfig).withValidation(
@@ -146,6 +153,7 @@ object AwsBatchRuntimeAttributes {
                         noAddressValidation(runtimeConfig),
                         dockerValidation,
                         queueArnValidation(runtimeConfig),
+                        jobRoleArnValidation(runtimeConfig),
                         scriptS3BucketNameValidation(runtimeConfig)
                       )
    def validationsLocalBackend  = StandardValidatedRuntimeAttributesBuilder.default(runtimeConfig).withValidation(
@@ -157,8 +165,9 @@ object AwsBatchRuntimeAttributes {
       memoryMinValidation(runtimeConfig),
       noAddressValidation(runtimeConfig),
       dockerValidation,
-      queueArnValidation(runtimeConfig)
-    )
+      queueArnValidation(runtimeConfig),
+     jobRoleArnValidation(runtimeConfig)
+   )
 
     configuration.fileSystem match  {
        case AWSBatchStorageSystems.s3 =>  validationsS3backend
@@ -174,6 +183,7 @@ object AwsBatchRuntimeAttributes {
     val disks: Seq[AwsBatchVolume] = RuntimeAttributesValidation.extract(disksValidation(runtimeAttrsConfig), validatedRuntimeAttributes)
     val docker: String = RuntimeAttributesValidation.extract(dockerValidation, validatedRuntimeAttributes)
     val queueArn: String = RuntimeAttributesValidation.extract(queueArnValidation(runtimeAttrsConfig), validatedRuntimeAttributes)
+    val jobRoleArn: Option[String] = RuntimeAttributesValidation.extract(jobRoleArnValidation(runtimeAttrsConfig), validatedRuntimeAttributes)
     val failOnStderr: Boolean = RuntimeAttributesValidation.extract(failOnStderrValidation(runtimeAttrsConfig), validatedRuntimeAttributes)
     val continueOnReturnCode: ContinueOnReturnCode = RuntimeAttributesValidation.extract(continueOnReturnCodeValidation(runtimeAttrsConfig), validatedRuntimeAttributes)
     val noAddress: Boolean = RuntimeAttributesValidation.extract(noAddressValidation(runtimeAttrsConfig), validatedRuntimeAttributes)
@@ -190,6 +200,7 @@ object AwsBatchRuntimeAttributes {
       disks,
       docker,
       queueArn,
+      jobRoleArn,
       failOnStderr,
       continueOnReturnCode,
       noAddress,
@@ -221,6 +232,8 @@ class ScriptS3BucketNameValidation( key: String ) extends StringRuntimeAttribute
     }
   }
 }
+
+object JobRoleArnValidation extends ArnValidation(AwsBatchRuntimeAttributes.JobRoleArnKey) {}
 
 object QueueArnValidation extends ArnValidation(AwsBatchRuntimeAttributes.QueueArnKey) {
   // queue arn format can be found here

@@ -158,15 +158,30 @@ trait AwsBatchJobDefinitionBuilder {
       environment
     )
 
-    (builder
-       .command(packedCommand.asJava)
+    if (context.runtimeAttributes.jobRoleArn.exists(_.trim.nonEmpty)) {
+      (builder
+        .command(packedCommand.asJava)
+        // Hate myself but this context doesn't have server configuration attributes, so using runtimeAttributes
+        .jobRoleArn(context.runtimeAttributes.jobRoleArn)
         .memory(context.runtimeAttributes.memory.to(MemoryUnit.MB).amount.toInt)
         .vcpus(context.runtimeAttributes.cpu##)
         .volumes( volumes.asJava)
         .mountPoints( mountPoints.asJava)
         .environment(environment.asJava),
 
-      jobDefinitionName)
+        jobDefinitionName)
+    } else {
+      (builder
+        .command(packedCommand.asJava)
+        .memory(context.runtimeAttributes.memory.to(MemoryUnit.MB).amount.toInt)
+        .vcpus(context.runtimeAttributes.cpu##)
+        .volumes( volumes.asJava)
+        .mountPoints( mountPoints.asJava)
+        .environment(environment.asJava),
+
+        jobDefinitionName)
+    }
+
   }
 
   private def packCommand(shell: String, options: String, mainCommand: String): Seq[String] = {

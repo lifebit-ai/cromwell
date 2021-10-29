@@ -361,6 +361,7 @@ final case class AwsBatchJob(jobDescriptor: BackendJobDescriptor, // WDL/CWL
         outputs = outputs)
 
       val jobDefinitionBuilder = StandardAwsBatchJobDefinitionBuilder
+      // HERE context is passed to job definition builder StandardAwsBatchJobDefinitionBuilder where we have added support gor jobRoleArn from runtimeAttributes
       val jobDefinition = jobDefinitionBuilder.build(jobDefinitionContext)
 
 
