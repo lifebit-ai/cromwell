@@ -1,6 +1,7 @@
 package org.lerch.s3fs;
 
 import static java.lang.String.format;
+import static software.amazon.awssdk.services.s3.model.ServerSideEncryption.AES256;
 
 import java.io.ByteArrayInputStream;
 import java.io.BufferedInputStream;
@@ -21,6 +22,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.s3.model.ServerSideEncryption;
 
 public class S3SeekableByteChannel implements SeekableByteChannel, S3Channel {
 
@@ -114,7 +116,7 @@ public class S3SeekableByteChannel implements SeekableByteChannel, S3Channel {
 
             builder.bucket(path.getFileStore().name());
             builder.key(path.getKey());
-
+            builder.serverSideEncryption(AES256.name());
             S3Client client = path.getFileSystem().getClient();
 
             client.putObject(builder.build(), RequestBody.fromInputStream(stream, length));

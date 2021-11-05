@@ -20,8 +20,10 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.s3.model.ServerSideEncryption;
 
 import static java.lang.String.format;
+import static software.amazon.awssdk.services.s3.model.ServerSideEncryption.AES256;
 
 public class S3FileChannel extends FileChannel implements S3Channel {
 
@@ -168,6 +170,7 @@ public class S3FileChannel extends FileChannel implements S3Channel {
             long length = Files.size(tempFile);
             builder.bucket(path.getFileStore().name())
                    .key(path.getKey())
+                   .serverSideEncryption(AES256.name())
                    .contentLength(length)
                    .contentType(new Tika().detect(stream, path.getFileName().toString()));
 

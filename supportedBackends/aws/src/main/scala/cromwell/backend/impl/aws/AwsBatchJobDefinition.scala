@@ -83,7 +83,7 @@ trait AwsBatchJobDefinitionBuilder {
    *
    */
   def builder(dockerImage: String): ContainerProperties.Builder =
-    ContainerProperties.builder().image(dockerImage)
+    ContainerProperties.builder().image(dockerImage).
 
 
   def buildResources(builder: ContainerProperties.Builder,

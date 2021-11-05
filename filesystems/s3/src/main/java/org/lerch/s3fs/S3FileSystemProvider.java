@@ -38,6 +38,7 @@ import static com.google.common.collect.Sets.difference;
 import static java.lang.String.format;
 import static java.lang.Thread.*;
 import static org.lerch.s3fs.AmazonS3Factory.*;
+import static software.amazon.awssdk.services.s3.model.ServerSideEncryption.AES256;
 
 /**
  *
@@ -391,6 +392,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
         String directoryKey = s3Path.getKey().endsWith("/") ? s3Path.getKey() : s3Path.getKey() + "/";
         builder.bucket(bucketName)
                 .key(directoryKey)
+                .serverSideEncryption(AES256.name())
                 .contentLength(0L);
         s3Path.getFileSystem().getClient().putObject(builder.build(), RequestBody.fromBytes(new byte[0]));
     }
@@ -443,6 +445,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
                             .copySource(bucketNameOrigin + "/" + keySource)
                             .bucket(bucketNameTarget)
                             .key(keyTarget)
+                            .serverSideEncryption(AES256.name())
                             .build());
         }
     }
@@ -463,6 +466,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
         final CreateMultipartUploadRequest createMultipartUploadRequest = CreateMultipartUploadRequest.builder()
                 .bucket(target.getFileStore().name())
                 .key(target.getKey())
+                .serverSideEncryption(AES256.name())
                 .build();
         final CreateMultipartUploadResponse createMultipartUploadResponse = s3Client.createMultipartUpload(createMultipartUploadRequest);
         final String uploadId = createMultipartUploadResponse.uploadId();
@@ -501,6 +505,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
                             .copySourceRange("bytes=" + finalBytePosition + "-" + lastByte)
                             .bucket(target.getFileStore().name())
                             .key(target.getKey())
+                            .sseCustomerAlgorithm(AES256.name())
                             .partNumber(finalPartNum)
                             .build();
                     UploadPartCopyResponse uploadPartCopyResponse =  s3Client.uploadPartCopy(uploadPartCopyRequest);
