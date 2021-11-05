@@ -207,13 +207,14 @@ class AwsBatchAsyncBackendJobExecutionActor(override val standardParams: Standar
     (remotePathArray zip localPathArray zipWithIndex) flatMap {
       case ((remotePath, localPath), index) =>
         var localPathString = localPath.valueString
-        if (localPathString.startsWith("s3://")){
+        if (localPathString.startsWith("s3://")) {
           localPathString = localPathString.replace("s3://", "")
         } else if (localPathString.startsWith("s3:/")) {
           localPathString = localPathString.replace("s3:/", "")
         }
         Seq(AwsBatchFileInput(s"$namePrefix-$index", remotePath.valueString, DefaultPathBuilder.get(localPathString), workingDisk))
     }
+  }
 
     /**
     * Turns WomFiles into relative paths.  These paths are relative to the working disk.
