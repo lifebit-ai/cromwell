@@ -216,7 +216,7 @@ final case class AwsBatchJob(jobDescriptor: BackendJobDescriptor, // WDL/CWL
          |$outputCopyCommand
          |echo '*** COMPLETED DELOCALIZATION ***'
          |echo '*** EXITING WITH RC CODE ***'
-         |         |exit $$(head -n 1 $workDir/${jobPaths.returnCodeFilename})
+         |exit $$(head -n 1 $workDir/${jobPaths.returnCodeFilename})
          |}
          |""".stripMargin
   }
