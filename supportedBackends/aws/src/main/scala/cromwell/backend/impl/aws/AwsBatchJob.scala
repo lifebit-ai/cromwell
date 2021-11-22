@@ -187,7 +187,7 @@ final case class AwsBatchJob(jobDescriptor: BackendJobDescriptor, // WDL/CWL
         s"""
            |touch ${output.name}
            |$s3Cmd cp ${s3CmdEncryptionOptions} --no-progress ${output.name} ${output.s3key}
-           |if [ -e $globDirectory ]; then $s3Cmd cp --no-progress $globDirectory $s3GlobOutDirectory --recursive --exclude "cromwell_glob_control_file"; fi
+           |if [ -e $globDirectory ]; then $s3Cmd cp ${s3CmdEncryptionOptions} --no-progress $globDirectory $s3GlobOutDirectory --recursive --exclude "cromwell_glob_control_file"; fi
            |""".stripMargin
 
       case output: AwsBatchFileOutput if output.s3key.startsWith("s3://") && output.mount.mountPoint.pathAsString == AwsBatchWorkingDisk.MountPoint.pathAsString =>
