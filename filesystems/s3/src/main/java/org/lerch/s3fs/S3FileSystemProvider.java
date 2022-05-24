@@ -505,7 +505,6 @@ public class S3FileSystemProvider extends FileSystemProvider {
                             .copySourceRange("bytes=" + finalBytePosition + "-" + lastByte)
                             .bucket(target.getFileStore().name())
                             .key(target.getKey())
-                            .sseCustomerAlgorithm(AES256.name())
                             .partNumber(finalPartNum)
                             .build();
                     UploadPartCopyResponse uploadPartCopyResponse =  s3Client.uploadPartCopy(uploadPartCopyRequest);
