@@ -399,6 +399,7 @@ class WorkflowActor(workflowToStart: WorkflowToStart,
     case Event(WorkflowFinalizationSucceededResponse, data) => finalizationSucceeded(data)
     case Event(WorkflowFinalizationFailedResponse(finalizationFailures), data) =>
       val failures = data.lastStateReached.failures.getOrElse(List.empty) ++ finalizationFailures
+      workflowLogger.warn(s"Workflow finalization failed. This may be caused for example by optional final outputs, which cromwell still does not support. Failures: ${finalizationFailures}")
       goto(WorkflowFailedState) using data.copy(lastStateReached = StateCheckpoint(FinalizingWorkflowState, Option(failures)))
     case Event(AbortWorkflowCommand, _) => stay()
   }

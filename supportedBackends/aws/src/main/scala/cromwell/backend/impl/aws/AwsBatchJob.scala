@@ -193,11 +193,11 @@ final case class AwsBatchJob(jobDescriptor: BackendJobDescriptor, // WDL/CWL
       case output: AwsBatchFileOutput if output.s3key.startsWith("s3://") && output.mount.mountPoint.pathAsString == AwsBatchWorkingDisk.MountPoint.pathAsString =>
         //output is on working disk mount
         s"""
-           |$s3Cmd cp ${s3CmdEncryptionOptions} --no-progress $workDir/${output.local.pathAsString} ${output.s3key}
+           |if [ -f ${output.name} ]; then $s3Cmd cp ${s3CmdEncryptionOptions} --no-progress $workDir/${output.local.pathAsString} ${output.s3key}; else echo 'Output ${output.name} could not be created (and saved to results).'; fi
            |""".stripMargin
       case output: AwsBatchFileOutput =>
         //output on a different mount
-        s"$s3Cmd cp ${s3CmdEncryptionOptions} --no-progress ${output.mount.mountPoint.pathAsString}/${output.local.pathAsString} ${output.s3key} "
+        s"if [ -f ${output.name} ]; then $s3Cmd cp ${s3CmdEncryptionOptions} --no-progress ${output.mount.mountPoint.pathAsString}/${output.local.pathAsString} ${output.s3key}; else echo 'Output ${output.name} could not be created (and saved to results).'; fi "
       case _ => ""
     }.mkString("\n") + "\n" +
       s"""
