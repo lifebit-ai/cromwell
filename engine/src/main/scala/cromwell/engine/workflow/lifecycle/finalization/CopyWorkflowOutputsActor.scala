@@ -47,6 +47,26 @@ class CopyWorkflowOutputsActor(workflowId: WorkflowId, override val ioActor: Act
     }
   }
 
+  private def checkForDuplicatedFilePaths(outputFilePaths: List[(Path, Path)]) = {
+    // Check if there are duplicated destination paths and throw an exception if that is the case.
+    // This creates a map of destinations and source paths which point to them in cases where there are multiple
+    // source paths that point to the same destination.
+    val duplicatedDestPaths: Map[Path, List[Path]] = outputFilePaths.groupBy { case (_, destPath) => destPath }.collect {
+      case (destPath, list) if list.size > 1 => destPath -> list.map { case (source, _) => source }
+    }
+    if (duplicatedDestPaths.nonEmpty) {
+      val formattedCollidingCopyOptions = duplicatedDestPaths.toList
+        .sortBy { case (dest, _) => dest.pathAsString } // Sort by destination path
+        // Make a '/my/src -> /my/dest' copy tape string for each source and destination. Use flat map to get a single list
+        // srcList is also sorted to get a deterministic output order. This is necessary for making sure the tests
+        // for the error always succeed.
+        .flatMap { case (dest, srcList) => srcList.sortBy(_.pathAsString).map(_.pathAsString + s" -> $dest") }
+      throw new IllegalStateException(
+        "Cannot copy output files to given final_workflow_outputs_dir" +
+          s" as multiple files will be copied to the same path: \n${formattedCollidingCopyOptions.mkString("\n")}")
+    }
+  }
+
   private def copyWorkflowOutputs(workflowOutputsFilePath: String): Future[Seq[Unit]] = {
     val workflowOutputsPath = buildPath(workflowOutputsFilePath)
 
@@ -56,22 +76,8 @@ class CopyWorkflowOutputsActor(workflowId: WorkflowId, override val ioActor: Act
     val requiredOutputFiles = getRequiredOutputs()
     val requiredOutputFilePaths = getOutputFilePaths(workflowOutputsPath, requiredOutputFiles)
 
-    // Check if there are duplicated destination paths and throw an exception if that is the case.
-    // This creates a map of destinations and source paths which point to them in cases where there are multiple
-    // source paths that point to the same destination.
-    val duplicatedDestPaths: Map[Path, List[Path]] = requiredOutputFilePaths.groupBy{ case (_, destPath) => destPath}.collect {
-      case (destPath, list) if list.size > 1 => destPath -> list.map {case (source, _) => source}
-    }
-    if (duplicatedDestPaths.nonEmpty) {
-      val formattedCollidingCopyOptions = duplicatedDestPaths.toList
-        .sortBy{case(dest, _) => dest.pathAsString} // Sort by destination path
-        // Make a '/my/src -> /my/dest' copy tape string for each source and destination. Use flat map to get a single list
-        // srcList is also sorted to get a deterministic output order. This is necessary for making sure the tests
-        // for the error always succeed.
-        .flatMap{ case (dest, srcList) => srcList.sortBy(_.pathAsString).map(_.pathAsString + s" -> $dest")}
-      throw new IllegalStateException(
-        "Cannot copy output files to given final_workflow_outputs_dir" +
-          s" as multiple files will be copied to the same path: \n${formattedCollidingCopyOptions.mkString("\n")}")}
+    checkForDuplicatedFilePaths(requiredOutputFilePaths)
+    checkForDuplicatedFilePaths(optionalOutputFilePaths)
 
     val requiredCopies = requiredOutputFilePaths map {
       case (srcPath, dstPath) => asyncIo.copyAsync(srcPath, dstPath)
